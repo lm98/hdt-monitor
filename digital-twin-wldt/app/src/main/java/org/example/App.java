@@ -5,6 +5,9 @@ package org.example;
 
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
 import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
+import it.wldt.adapter.mqtt.digital.MqttDigitalAdapter;
+import it.wldt.adapter.mqtt.digital.MqttDigitalAdapterConfiguration;
+import it.wldt.adapter.mqtt.digital.topic.MqttQosLevel;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.core.engine.DigitalTwin;
@@ -19,12 +22,16 @@ public class App {
     public static void main(String[] args) {
         try {
             var dt = new DigitalTwin("my-twin", new DefaultShadowingFunction());
-            // Config digital adapter
-            var digitalConfig = new HttpDigitalAdapterConfiguration("my-http-adapter", "localhost", 8080);
-            // Add property filter
-            digitalConfig.addPropertyFilter("blood-pressure");
 
-            var httpDigitalAdapter = new HttpDigitalAdapter(digitalConfig, dt);
+            var mqttDigitalConfig = MqttDigitalAdapterConfiguration.builder(MQTT_BROKER, Integer.parseInt(MQTT_PORT))
+                    .addPropertyTopic("blood-pressure", "state/blood-pressure", MqttQosLevel.MQTT_QOS_0, (BloodPressure payload) -> {
+                        var opt = BloodPressure.toJsonString(payload);
+                        return opt.orElse("{\"systolic\":0.0,\"diastolic\":0.0}");
+                    })
+                    .build();
+
+            var mqttDigitalAdapter = new MqttDigitalAdapter("test-mqtt-da", mqttDigitalConfig);
+
 
             // Create an instance of MqttPhysical Adapter Configuration
             var physicalConfig = MqttPhysicalAdapterConfiguration.builder(MQTT_BROKER, Integer.parseInt(MQTT_PORT))
@@ -39,7 +46,7 @@ public class App {
 
             var mqttPhysicalAdapter = new MqttPhysicalAdapter("test-mqtt-pa", physicalConfig);
 
-            dt.addDigitalAdapter(httpDigitalAdapter);
+            dt.addDigitalAdapter(mqttDigitalAdapter);
             dt.addPhysicalAdapter(mqttPhysicalAdapter);
 
             var dtEngine = new DigitalTwinEngine();
