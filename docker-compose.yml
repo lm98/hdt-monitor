@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  digital_twin:
+    build:
+      context: ./digital-twin-wldt
+    command: ["./gradlew", "run"]
+    depends_on:
+      - broker
+    environment:
+      - MQTT_BROKER=broker
+      - MQTT_PORT=1883
+
+  broker:
+    image: eclipse-mosquitto:latest
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
