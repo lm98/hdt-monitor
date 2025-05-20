@@ -23,9 +23,13 @@ dependencies {
 
     // This dependency is used by the application.
     implementation(libs.guava)
+
+    // WLDT dependencies
     implementation("io.github.wldt:wldt-core:0.4.0")
     implementation("io.github.wldt:mqtt-physical-adapter:0.1.2")
     implementation("io.github.wldt:http-digital-adapter:0.2")
+    implementation("io.github.wldt:mqtt-digital-adapter:0.1.2")
+
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
 }
 
