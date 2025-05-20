@@ -1,7 +1,15 @@
 // src/MqttTemperatureChart.js
-import React, { useState, useEffect } from 'react';
-import mqtt from 'mqtt';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import React, { useState, useEffect } from "react";
+import mqtt from "mqtt";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 
 const MqttTemperatureChart = () => {
   // Initialize an empty array for the chart data
@@ -9,43 +17,37 @@ const MqttTemperatureChart = () => {
 
   useEffect(() => {
     // Connect to the MQTT broker
-    const client = mqtt.connect('ws://localhost:9001');
+    const client = mqtt.connect("ws://localhost:9001");
 
-    client.on('connect', () => {
-      console.log('Connected to MQTT broker');
+    client.on("connect", () => {
+      console.log("Connected to MQTT broker");
       // Subscribe to the sensor/temperature topic
-      client.subscribe('sensor/temperature', (err) => {
+      client.subscribe("sensor/temperature", (err) => {
         if (err) {
-          console.error('Subscription error:', err);
+          console.error("Subscription error:", err);
         } else {
-          console.log('Subscribed to sensor/temperature topic');
+          console.log("Subscribed to sensor/temperature topic");
         }
       });
     });
 
     // When a message is received, update the chart data
-    client.on('message', (topic, message) => {
-      try {
-        // Convert message to string and attempt to parse as JSON.
-        // If the message is not JSON, parseFloat will handle a raw number.
-        let temperature;
+    client.on("message", (topic, message) => {
+      if (topic === "state/blood-pressure") {
         try {
           const parsed = JSON.parse(message.toString());
-          temperature = parsed.temperature || parsed;
-        } catch (jsonError) {
-          temperature = parseFloat(message.toString());
-        }
-        
-        // Get the current time to label the x-axis
-        const currentTime = new Date().toLocaleTimeString();
+          const { systolic, diastolic } = parsed;
 
-        // Append the new data point to the state, limiting to the last 10 entries
-        setData(prevData => {
-          const updatedData = [...prevData, { time: currentTime, temperature }];
-          return updatedData.slice(-10);
-        });
-      } catch (error) {
-        console.error('Error processing MQTT message:', error);
+          const newDataPoint = {
+            time: new Date().toLocaleTimeString(), // or use ISO for accuracy
+            systolic,
+            diastolic,
+          };
+
+          setData((prev) => [...prev.slice(-49), newDataPoint]); // keep last 50 points
+        } catch (err) {
+          console.error("Invalid JSON", err);
+        }
       }
     });
 
@@ -56,15 +58,15 @@ const MqttTemperatureChart = () => {
   }, []);
 
   return (
-    <div>
-      <h2>MQTT Temperature Chart</h2>
-      <LineChart width={600} height={300} data={data}>
+    <div style={{ width: "100%", height: 300 }}>
+      <LineChart width={800} height={300} data={data}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="time" />
-        <YAxis label={{ value: 'Temperature (°C)', angle: -90, position: 'insideLeft' }} />
+        <YAxis />
         <Tooltip />
         <Legend />
-        <Line type="monotone" dataKey="temperature" stroke="#82ca9d" activeDot={{ r: 8 }} />
+        <Line type="monotone" dataKey="systolic" stroke="#ff7300" />
+        <Line type="monotone" dataKey="diastolic" stroke="#387908" />
       </LineChart>
     </div>
   );
