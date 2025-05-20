@@ -1,8 +1,10 @@
 package org.example.bp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 public record BloodPressure(Double systolic, Double diastolic) implements Serializable {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -20,6 +22,15 @@ public record BloodPressure(Double systolic, Double diastolic) implements Serial
             return bp;
         } catch (Exception e) {
             return BloodPressure.defaultBloodPressure();
+        }
+    }
+
+    public static Optional<String> toJsonString(BloodPressure bp) {
+        try {
+            var str = mapper.writeValueAsString(bp);
+            return Optional.of(str);
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 }
