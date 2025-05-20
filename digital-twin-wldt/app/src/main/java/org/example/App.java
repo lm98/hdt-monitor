@@ -32,7 +32,7 @@ public class App {
                     .addPhysicalAssetPropertyAndTopic(
                             "blood-pressure",
                             BloodPressure.defaultBloodPressure(),
-                            "property/blood-pressure",
+                            "sensor/blood-pressure",
                             BloodPressure::fromJsonString
                     )
                     .build();
