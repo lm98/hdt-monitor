@@ -11,6 +11,8 @@ import {
   Legend,
 } from "recharts";
 
+const MQTT_TOPIC = "state/blood-pressure"
+
 const MqttTemperatureChart = () => {
   // Initialize an empty array for the chart data
   const [data, setData] = useState([]);
@@ -22,11 +24,11 @@ const MqttTemperatureChart = () => {
     client.on("connect", () => {
       console.log("Connected to MQTT broker");
       // Subscribe to the sensor/temperature topic
-      client.subscribe("sensor/temperature", (err) => {
+      client.subscribe(MQTT_TOPIC, (err) => {
         if (err) {
           console.error("Subscription error:", err);
         } else {
-          console.log("Subscribed to sensor/temperature topic");
+          console.log("Subscribed to " + MQTT_TOPIC + " topic");
         }
       });
     });
