@@ -27,3 +27,12 @@ services:
       - "9001:9001"
     volumes:
       - ./mosquitto/config:/mosquitto/config
+
+  frontend:
+    build:
+      context: ./frontend
+    command: ["npm", "start"]
+    ports:
+      - "3000:3000"
+    stdin_open: true         # optional, helps with interactive dev tools
+    tty: true                # optional, helps with React developmentc
