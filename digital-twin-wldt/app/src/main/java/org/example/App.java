@@ -3,8 +3,6 @@
  */
 package org.example;
 
-import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapter;
-import it.wldt.adapter.http.digital.adapter.HttpDigitalAdapterConfiguration;
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapter;
 import it.wldt.adapter.mqtt.digital.MqttDigitalAdapterConfiguration;
 import it.wldt.adapter.mqtt.digital.topic.MqttQosLevel;
@@ -12,7 +10,7 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
-import org.example.bp.BloodPressure;
+import org.example.model.bp.BloodPressure;
 import org.example.shadowing.DefaultShadowingFunction;
 
 public class App {

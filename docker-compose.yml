@@ -32,6 +32,9 @@ services:
     build:
       context: ./frontend
     command: ["npm", "start"]
+    environment:
+      - REACT_APP_MQTT_BROKER=broker
+      - REACT_APP_TOPIC_BLOOD_PRESSURE="sensor/blood-pressure"
     ports:
       - "3000:3000"
     stdin_open: true         # optional, helps with interactive dev tools
