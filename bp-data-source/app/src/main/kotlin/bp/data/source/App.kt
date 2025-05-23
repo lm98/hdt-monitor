@@ -8,10 +8,12 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
@@ -38,8 +40,26 @@ fun main(): Unit = runBlocking {
     FirebaseApp.initializeApp(options)
     val db = FirebaseDatabase.getInstance()
     val referencePath = System.getenv().getOrDefault("FIREBASE_REFERENCE_PATH", "eRgFEP18QvOubABo8bnyEr")
+    val ref = db.getReference(referencePath)
 
-    db.getReference(referencePath).addValueEventListener(object: ValueEventListener {
+    observeAndSend(ref, mqttClient, topic, gson)
+}
+
+fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
+    val message = MqttMessage(payload.toByteArray()).apply {
+        qos = 1
+        isRetained = false
+    }
+    mqttClient.publish(topic, message)
+    println("Published to [$topic]: $payload")
+}
+
+suspend fun observeAndSend(ref: DatabaseReference,
+                           mqttClient: MqttClient,
+                           topic: String,
+                           gson: Gson
+): Unit = suspendCancellableCoroutine { continuation ->
+    val listener = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             println("Data exists: ${snapshot.exists()}")
 
@@ -56,23 +76,19 @@ fun main(): Unit = runBlocking {
                     println("Failed to parse measurement for key: ${child.key}")
                 }
             }
-            latch.countDown()
         }
 
-        override fun onCancelled(error: DatabaseError) {
-            println("Firebase Database error: ${error.message}")
-            latch.countDown()
+        override fun onCancelled(err: DatabaseError) {
+            continuation.resume(Unit) { _, _, _ -> }
         }
-    })
 
-    latch.await()
-}
-
-fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
-    val message = MqttMessage(payload.toByteArray()).apply {
-        qos = 1
-        isRetained = false
     }
-    mqttClient.publish(topic, message)
-    println("Published to [$topic]: $payload")
+
+    ref.addValueEventListener(listener)
+
+    // Automatically remove listener if coroutine is cancelled
+    continuation.invokeOnCancellation {
+        ref.removeEventListener(listener)
+        println("Firebase listener cancelled")
+    }
 }
