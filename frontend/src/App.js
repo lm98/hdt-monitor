@@ -1,11 +1,9 @@
-// src/App.js
-import React from 'react';
-import MqttTemperatureChart from './components/MqttTemperatureChart';
+import DigitalTwinMonitor from './components/DigitalTwinMonitor';
 
 function App() {
   return (
     <div className="App">
-      <MqttTemperatureChart />
+      <DigitalTwinMonitor />
     </div>
   );
 }
