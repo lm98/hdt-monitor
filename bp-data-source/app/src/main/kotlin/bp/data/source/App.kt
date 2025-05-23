@@ -3,7 +3,6 @@
  */
 package bp.data.source
 
-import bp.data.source.model.Measurement
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
@@ -11,47 +10,69 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
 import org.eclipse.paho.client.mqttv3.MqttClient
-import java.io.FileInputStream
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.eclipse.paho.client.mqttv3.MqttMessage
 
-fun main() = runBlocking {
+fun main(): Unit = runBlocking {
+    val gson = Gson()
+    val latch = java.util.concurrent.CountDownLatch(1)
+
+    // Initialize MQTT client
+    val broker = System.getenv().getOrDefault("MQTT_BROKER", "localhost")
+    val port = System.getenv().getOrDefault("MQTT_PORT", "1883")
+    val topic = System.getenv().getOrDefault("MQTT_TOPIC", "sensor/blood-pressure")
+    val mqttClient = MqttClient("tcp://$broker:$port", MqttClient.generateClientId())
+    val mqttOptions = MqttConnectOptions().apply { isCleanSession = true }
+    mqttClient.connect(mqttOptions)
+    println("Connected to Mqtt Broker ${broker}:${port}")
+
     // Initialize Firebase
-    val serviceAccount = FileInputStream("src/main/resources/serviceAccountKey.json")
+    val serviceAccount = {}::class.java.classLoader.getResourceAsStream("serviceAccountKey.json")
     val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+        .setDatabaseUrl("https://wearablehbpproject-default-rtdb.europe-west1.firebasedatabase.app/")
         .build()
     FirebaseApp.initializeApp(options)
-
     val db = FirebaseDatabase.getInstance()
-    val referenceUrl = System.getenv().getOrDefault("FIREBASE_REFERENCE_URL", "")
+    val referencePath = System.getenv().getOrDefault("FIREBASE_REFERENCE_PATH", "eRgFEP18QvOubABo8bnyEr")
 
-    db.getReferenceFromUrl(referenceUrl).addListenerForSingleValueEvent(object: ValueEventListener {
+    db.getReference(referencePath).addValueEventListener(object: ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            for(measurementSnapshot in snapshot.children) {
-                val measurement = measurementSnapshot.getValue(Measurement::class.java)
-                measurement?.let {
-                    println("Firebase Measurement: $it")
-                    // SEND DATA OVER MQTT
+            println("Data exists: ${snapshot.exists()}")
+
+            for (child in snapshot.children) {
+                println("Raw child key: ${child.key}")
+                println("Raw child value: ${child.value}")
+
+                val measurement = child.getValue(Measurement::class.java)
+                if (measurement != null) {
+                    println("Parsed Measurement: $measurement")
+                    val payload = gson.toJson(measurement)
+                    sendToMqtt(mqttClient, topic, payload)
+                } else {
+                    println("Failed to parse measurement for key: ${child.key}")
                 }
             }
+            latch.countDown()
         }
 
         override fun onCancelled(error: DatabaseError) {
             println("Firebase Database error: ${error.message}")
+            latch.countDown()
         }
-
     })
 
-    // Initialize MQTT client
-    /*
-    val broker = System.getenv().getOrDefault("MQTT_BROKER", "127.0.0.1")
-    val port = System.getenv().getOrDefault("MQTT_PORT", "1883")
-    val mqttClient = MqttClient("$broker:$port", MqttClient.generateClientId())
-    val mqttOptions = MqttConnectOptions().apply { isCleanSession = true }
-    mqttClient.connect(mqttOptions)*/
+    latch.await()
 }
 
 fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
-
+    val message = MqttMessage(payload.toByteArray()).apply {
+        qos = 1
+        isRetained = false
+    }
+    mqttClient.publish(topic, message)
+    println("Published to [$topic]: $payload")
 }

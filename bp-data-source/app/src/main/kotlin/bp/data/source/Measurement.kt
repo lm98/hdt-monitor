@@ -1,4 +1,4 @@
-package bp.data.source.model
+package bp.data.source
 
 data class HeartRate(
     val hrAVG: Int? = null,

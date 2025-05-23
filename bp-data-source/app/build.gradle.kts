@@ -43,6 +43,10 @@ dependencies {
 
     // IoT sim with MQTT
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+
+    implementation("org.slf4j:slf4j-simple:2.0.9")
+
+    implementation("com.google.code.gson:gson:2.13.1")
 }
 
 application {
