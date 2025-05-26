@@ -12,12 +12,13 @@ public record HeartRate(
         Integer hrMAX,
         Integer hrMC,
         Integer hrMIN,
-        Long hrStart
+        Long hrStart,
+        Long timestamp
 ) {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static HeartRate defaultHeartRate() {
-        return new HeartRate(-1, 0L, -1, -1, -1, 0L);
+        return new HeartRate(-1, 0L, -1, -1, -1, 0L, 0L);
     }
 
     public static HeartRate fromJsonString(String json) {

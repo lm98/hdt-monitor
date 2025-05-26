@@ -1,12 +1,14 @@
 package bp.data.source
 
-data class HeartRate(
+/** DATA COMING FROM FIREBASE **/
+
+data class HeartRateMeasurement(
     val hrAVG: Int? = null,
     val hrEnd: Long? = null,
     val hrMAX: Int? = null,
     val hrMC: Int? = null,
     val hrMIN: Int? = null,
-    val hrStart: Long? = null
+    val hrStart: Long? = null,
 )
 
 data class Measurement(
@@ -19,5 +21,23 @@ data class Measurement(
     val timestamp: Long? = null,
     val timezone: Int? = null,
     val uid: String? = null,
-    val heartRate: HeartRate? = null
+    val heartRate: HeartRateMeasurement? = null,
+)
+
+/** DATA TO BE SENT **/
+
+data class BloodPressure(
+    val systolic: Int? = null,
+    val diastolic: Int? = null,
+    val timestamp: Long? = null,
+)
+
+data class HeartRate(
+    val hrAVG: Int? = null,
+    val hrEnd: Long? = null,
+    val hrMAX: Int? = null,
+    val hrMC: Int? = null,
+    val hrMIN: Int? = null,
+    val hrStart: Long? = null,
+    val timestamp: Long? = null,
 )

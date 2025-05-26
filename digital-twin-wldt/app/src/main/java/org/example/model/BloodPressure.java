@@ -6,12 +6,13 @@ import java.util.Optional;
 
 public record BloodPressure(
         Integer systolic,
-        Integer diastolic
+        Integer diastolic,
+        Long timestamp
 ) {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static BloodPressure defaultBloodPressure() {
-        return new BloodPressure(0, 0);
+        return new BloodPressure(0, 0, 0L);
     }
 
     public static BloodPressure fromJsonString(String json) {
