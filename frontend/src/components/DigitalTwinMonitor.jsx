@@ -1,7 +1,8 @@
 import MqttPropertyLineChart from './MqttPropertyLineChart';
 
 export default function DigitalTwinMonitor() {
-  const topic = process.env.REACT_APP_TOPIC_BLOOD_PRESSURE || 'sensor/bloodPressure';
+  const topicBp = process.env.REACT_APP_TOPIC_BLOOD_PRESSURE || 'sensor/blood-pressure';
+  const topicHr = process.env.REACT_APP_TOPIC_HEART_RATE || 'sensor/heart-rate';
   const broker = process.env.REACT_APP_MQTT_BROKER || 'ws://localhost:9001';
 
   return (
@@ -25,10 +26,17 @@ export default function DigitalTwinMonitor() {
       <section>
         <MqttPropertyLineChart
           broker = {broker}
-          topic = {topic}
+          topic = {topicBp}
           title="Blood Pressure"
           dataKeys={['systolic', 'diastolic']}
           yDomain={[60, 180]}
+        />
+        <MqttPropertyLineChart
+          broker={broker}
+          topic={topicHr}
+          title="Average Heart Rate"
+          dataKeys={['hrAVG']}
+          yDomain={[40, 180]}
         />
       </section>
 

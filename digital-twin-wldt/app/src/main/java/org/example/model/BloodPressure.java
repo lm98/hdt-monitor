@@ -1,15 +1,17 @@
-package org.example.model.bp;
+package org.example.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.Serializable;
 import java.util.Optional;
 
-public record BloodPressure(Double systolic, Double diastolic) implements Serializable {
+public record BloodPressure(
+        Integer systolic,
+        Integer diastolic
+) {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static BloodPressure defaultBloodPressure() {
-        return new BloodPressure(0.0, 0.0);
+        return new BloodPressure(0, 0);
     }
 
     public static BloodPressure fromJsonString(String json) {
