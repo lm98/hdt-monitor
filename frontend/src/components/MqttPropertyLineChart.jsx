@@ -26,8 +26,6 @@ export default function MqttPropertyLineChart({ broker, topic, dataKeys, title, 
           } else {
             entry = { time: new Date().toLocaleTimeString() };
           }
-          
-
           dataKeys.forEach(key => {
             entry[key] = parsed[key];
           });
