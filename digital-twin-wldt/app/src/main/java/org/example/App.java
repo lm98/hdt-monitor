@@ -10,12 +10,17 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
-import org.example.model.bp.BloodPressure;
+import org.example.model.BloodPressure;
+import org.example.model.HeartRate;
 import org.example.shadowing.DefaultShadowingFunction;
+
+import java.util.function.Function;
 
 public class App {
     private static final String MQTT_BROKER = System.getenv().getOrDefault("MQTT_BROKER", "127.0.0.1");
     private static final String MQTT_PORT = System.getenv().getOrDefault("MQTT_PORT", "1883");
+    private static final String MQTT_TOPIC_BP = System.getenv().getOrDefault("MQTT_TOPIC_BP", "sensor/blood-pressure");
+    private static final String MQTT_TOPIC_HR = System.getenv().getOrDefault("MQTT_TOPIC_HR", "sensor/heart-rate");
 
     public static void main(String[] args) {
         try {
@@ -25,6 +30,10 @@ public class App {
                     .addPropertyTopic("blood-pressure", "state/blood-pressure", MqttQosLevel.MQTT_QOS_0, (BloodPressure payload) -> {
                         var opt = BloodPressure.toJsonString(payload);
                         return opt.orElse("{\"systolic\":0.0,\"diastolic\":0.0}");
+                    })
+                    .addPropertyTopic("heart-rate", "state/heart-rate", MqttQosLevel.MQTT_QOS_0, (HeartRate payload) -> {
+                        var opt = HeartRate.toJsonString(payload);
+                        return opt.orElse(HeartRate.defaultHeartRate().toString());
                     })
                     .build();
 
@@ -37,8 +46,39 @@ public class App {
                     .addPhysicalAssetPropertyAndTopic(
                             "blood-pressure",
                             BloodPressure.defaultBloodPressure(),
-                            "sensor/blood-pressure",
+                            MQTT_TOPIC_BP,
                             BloodPressure::fromJsonString
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "heart-rate",
+                            HeartRate.defaultHeartRate(),
+                            MQTT_TOPIC_HR,
+                            HeartRate::fromJsonString
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "name",
+                            "Leonardo",
+                            "sensor/name",
+                            Function.identity()
+
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "surname",
+                            "Micelli",
+                            "sensor/surname",
+                            Function.identity()
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "weight",
+                            83,
+                            "sensor/weight",
+                            Integer::parseInt
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "height",
+                            180,
+                            "sensor/height",
+                            Integer::parseInt
                     )
                     .build();
 
