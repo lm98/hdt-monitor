@@ -3,6 +3,7 @@
  */
 package bp.data.source
 
+import bp.data.source.model.BloodOxygen
 import bp.data.source.model.BloodPressure
 import bp.data.source.model.Exercise
 import bp.data.source.model.HeartRate
@@ -57,12 +58,16 @@ fun main(): Unit = runBlocking {
         .build()
     FirebaseApp.initializeApp(options)
     val db = FirebaseDatabase.getInstance()
-    //val refBP = db.getReference(referencePath)
+    val refBP = db.getReference("${referencePath}/blood-pressure")
     val refExercise = db.getReference("${referencePath}/exercises")
     val refSteps = db.getReference("${referencePath}/steps")
+    val refBloodOxygen = db.getReference("${referencePath}/blood-oxygen")
+
+
     launch { observeAndSendExercises(refExercise, mqttClient, gson) }
     launch { observeAndSendSteps(refSteps, mqttClient, gson) }
-    //launch { observeAndSendBP(refBP, mqttClient, gson) }
+    launch { observeAndSendBP(refBP, mqttClient, gson) }
+    launch { observeAndSendBloodOxygen(refBloodOxygen, mqttClient, gson) }
 }
 
 fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
@@ -168,3 +173,6 @@ suspend fun observeAndSendExercises(ref: DatabaseReference, mqttClient: MqttClie
 
 suspend fun observeAndSendSteps(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
     observeAndSendGeneric(ref, mqttClient, gson, "sensor/steps", Steps::class)
+
+suspend fun observeAndSendBloodOxygen(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
+    observeAndSendGeneric(ref, mqttClient, gson, "sensor/blood-oxygen", BloodOxygen::class)
