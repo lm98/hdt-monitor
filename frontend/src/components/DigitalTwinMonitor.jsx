@@ -34,7 +34,14 @@ export default function DigitalTwinMonitor() {
         <MqttPropertyLineChart
           broker={broker}
           topic={topicHr}
-          title="Average Heart Rate"
+          title="Heart Rate"
+          dataKeys={['hrAVG']}
+          yDomain={[40, 180]}
+        />
+        <MqttPropertyLineChart
+          broker={broker}
+          topic={topicHr}
+          title="Excercise Activity"
           dataKeys={['hrAVG']}
           yDomain={[40, 180]}
         />

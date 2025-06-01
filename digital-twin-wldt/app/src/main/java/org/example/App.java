@@ -10,31 +10,47 @@ import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapter;
 import it.wldt.adapter.mqtt.physical.MqttPhysicalAdapterConfiguration;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
-import org.example.model.BloodPressure;
-import org.example.model.HeartRate;
+import org.example.model.*;
 import org.example.shadowing.DefaultShadowingFunction;
+import org.example.util.serde.*;
 
 import java.util.function.Function;
 
+import static org.example.App.Stubs.*;
+import static org.example.App.Constants.*;
+
+
 public class App {
-    private static final String MQTT_BROKER = System.getenv().getOrDefault("MQTT_BROKER", "127.0.0.1");
-    private static final String MQTT_PORT = System.getenv().getOrDefault("MQTT_PORT", "1883");
-    private static final String MQTT_TOPIC_BP = System.getenv().getOrDefault("MQTT_TOPIC_BP", "sensor/blood-pressure");
-    private static final String MQTT_TOPIC_HR = System.getenv().getOrDefault("MQTT_TOPIC_HR", "sensor/heart-rate");
+    /**
+     * This class contains classes for serialize and deserialize model classes, used for the Physical and Digital Interface.
+     */
+    public static class Stubs {
+        public static BloodPressureStub bpStub = new BloodPressureStub();
+        public static HeartRateStub hrStub = new HeartRateStub();
+        public static StepsStub stepsStub = new StepsStub();
+        public static OxygenSaturationStub oxyStub = new OxygenSaturationStub();
+        public static ExerciseStub exerciseStub = new ExerciseStub();
+        public static MoodStub moodStub = new MoodStub();
+    }
+
+    public static class Constants {
+        public static final String MQTT_BROKER = System.getenv().getOrDefault("MQTT_BROKER", "127.0.0.1");
+        public static final String MQTT_PORT = System.getenv().getOrDefault("MQTT_PORT", "1883");
+        public static final String MQTT_TOPIC_BP = System.getenv().getOrDefault("MQTT_TOPIC_BP", "sensor/blood-pressure");
+        public static final String MQTT_TOPIC_HR = System.getenv().getOrDefault("MQTT_TOPIC_HR", "sensor/heart-rate");
+    }
 
     public static void main(String[] args) {
         try {
             var dt = new DigitalTwin("my-twin", new DefaultShadowingFunction());
 
             var mqttDigitalConfig = MqttDigitalAdapterConfiguration.builder(MQTT_BROKER, Integer.parseInt(MQTT_PORT))
-                    .addPropertyTopic("blood-pressure", "state/blood-pressure", MqttQosLevel.MQTT_QOS_0, (BloodPressure payload) -> {
-                        var opt = BloodPressure.toJsonString(payload);
-                        return opt.orElse("{\"systolic\":0.0,\"diastolic\":0.0}");
-                    })
-                    .addPropertyTopic("heart-rate", "state/heart-rate", MqttQosLevel.MQTT_QOS_0, (HeartRate payload) -> {
-                        var opt = HeartRate.toJsonString(payload);
-                        return opt.orElse(HeartRate.defaultHeartRate().toString());
-                    })
+                    .addPropertyTopic("blood-pressure", "state/blood-pressure", MqttQosLevel.MQTT_QOS_0, bpStub::serialize)
+                    .addPropertyTopic("heart-rate", "state/heart-rate", MqttQosLevel.MQTT_QOS_0, hrStub::serialize)
+                    .addPropertyTopic("steps", "state/steps", MqttQosLevel.MQTT_QOS_0, stepsStub::serialize)
+                    .addPropertyTopic("oxygen-saturation", "state/oxygen-saturation", MqttQosLevel.MQTT_QOS_0, oxyStub::serialize)
+                    .addPropertyTopic("exercise", "state/exercise", MqttQosLevel.MQTT_QOS_0, exerciseStub::serialize)
+                    .addPropertyTopic("mood", "state/mood", MqttQosLevel.MQTT_QOS_0, moodStub::serialize)
                     .build();
 
             var mqttDigitalAdapter = new MqttDigitalAdapter("test-mqtt-da", mqttDigitalConfig);
@@ -47,20 +63,19 @@ public class App {
                             "blood-pressure",
                             BloodPressure.defaultBloodPressure(),
                             MQTT_TOPIC_BP,
-                            BloodPressure::fromJsonString
+                            bpStub::deserialize
                     )
                     .addPhysicalAssetPropertyAndTopic(
                             "heart-rate",
                             HeartRate.defaultHeartRate(),
                             MQTT_TOPIC_HR,
-                            HeartRate::fromJsonString
+                            hrStub::deserialize
                     )
                     .addPhysicalAssetPropertyAndTopic(
                             "name",
                             "Leonardo",
                             "sensor/name",
                             Function.identity()
-
                     )
                     .addPhysicalAssetPropertyAndTopic(
                             "surname",
@@ -79,6 +94,30 @@ public class App {
                             180,
                             "sensor/height",
                             Integer::parseInt
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "steps",
+                            Steps.defaultSteps(),
+                            "sensor/steps",
+                            stepsStub::deserialize
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "oxygen-saturation",
+                            OxygenSaturation.defaultOxygenSaturation(),
+                            "sensor/oxygen-saturation",
+                            oxyStub::deserialize
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "exercise",
+                            Exercise.defaultExercise(),
+                            "sensor/exercise",
+                            exerciseStub::deserialize
+                    )
+                    .addPhysicalAssetPropertyAndTopic(
+                            "mood",
+                            Mood.defaultMood(),
+                            "sensor/mood",
+                            moodStub::deserialize
                     )
                     .build();
 

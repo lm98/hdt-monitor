@@ -3,6 +3,11 @@
  */
 package bp.data.source
 
+import bp.data.source.model.BloodPressure
+import bp.data.source.model.Exercise
+import bp.data.source.model.HeartRate
+import bp.data.source.model.Measurement
+import bp.data.source.model.Steps
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
@@ -12,14 +17,26 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.eclipse.paho.client.mqttv3.MqttClient
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttMessage
+import kotlin.reflect.KClass
 
 val topicBp = System.getenv().getOrDefault("MQTT_TOPIC_BP", "sensor/blood-pressure")!!
 val topicHr = System.getenv().getOrDefault("MQTT_TOPIC_HR", "sensor/heart-rate")!!
+
+val dbUrl: String? = System.getenv().getOrDefault(
+    "FIREBASE_DB_URL",
+    "https://wearablehbpproject-default-rtdb.europe-west1.firebasedatabase.app/"
+)
+
+val referencePath: String? = System.getenv().getOrDefault(
+    "FIREBASE_REFERENCE_PATH",
+    "eI9rnUy-QY-7XprUam0IqP"
+)
 
 fun main(): Unit = runBlocking {
     val gson = Gson()
@@ -33,14 +50,6 @@ fun main(): Unit = runBlocking {
     println("Connected to Mqtt Broker ${broker}:${port}")
 
     // Initialize Firebase
-    val dbUrl = System.getenv().getOrDefault(
-        "FIREBASE_DB_URL",
-        "https://wearablehbpproject-default-rtdb.europe-west1.firebasedatabase.app/"
-    )
-    val referencePath = System.getenv().getOrDefault(
-        "FIREBASE_REFERENCE_PATH",
-        "f8c4z9xxT-689t_R68Z8CV"
-    )
     val serviceAccount = {}::class.java.classLoader.getResourceAsStream("serviceAccountKey.json")
     val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -48,9 +57,12 @@ fun main(): Unit = runBlocking {
         .build()
     FirebaseApp.initializeApp(options)
     val db = FirebaseDatabase.getInstance()
-    val ref = db.getReference(referencePath)
-
-    observeAndSend(ref, mqttClient, gson)
+    //val refBP = db.getReference(referencePath)
+    val refExercise = db.getReference("${referencePath}/exercises")
+    val refSteps = db.getReference("${referencePath}/steps")
+    launch { observeAndSendExercises(refExercise, mqttClient, gson) }
+    launch { observeAndSendSteps(refSteps, mqttClient, gson) }
+    //launch { observeAndSendBP(refBP, mqttClient, gson) }
 }
 
 fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
@@ -62,7 +74,45 @@ fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
     println("Published to [$topic]: $payload")
 }
 
-suspend fun observeAndSend(ref: DatabaseReference,
+suspend fun <T : Any> observeAndSendGeneric(
+    ref: DatabaseReference,
+    mqttClient: MqttClient,
+    gson: Gson,
+    topic: String,
+    clazz: KClass<T>
+): Unit = suspendCancellableCoroutine { continuation ->
+    val listener = object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            println("Data exists: ${snapshot.exists()}")
+
+            for (child in snapshot.children) {
+                println("Raw child key: ${child.key}")
+                println("Raw child value: ${child.value}")
+
+                val measurement = child.getValue(clazz.java)
+                if (measurement != null) {
+                    println("Parsed Measurement: $measurement")
+                    val payload = gson.toJson(measurement)
+                    sendToMqtt(mqttClient, topic, payload)
+                } else {
+                    println("Failed to parse measurement for key: ${child.key}")
+                }
+            }
+        }
+
+        override fun onCancelled(err: DatabaseError) {
+            continuation.resume(Unit) { _, _, _ -> }
+        }
+    }
+
+    ref.addValueEventListener(listener)
+    continuation.invokeOnCancellation {
+        ref.removeEventListener(listener)
+        println("Firebase listener cancelled")
+    }
+}
+
+suspend fun observeAndSendBP(ref: DatabaseReference,
                            mqttClient: MqttClient,
                            gson: Gson
 ): Unit = suspendCancellableCoroutine { continuation ->
@@ -111,3 +161,10 @@ suspend fun observeAndSend(ref: DatabaseReference,
         println("Firebase listener cancelled")
     }
 }
+
+suspend fun observeAndSendExercises(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
+    observeAndSendGeneric(ref, mqttClient, gson, "sensor/exercise", Exercise::class)
+
+
+suspend fun observeAndSendSteps(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
+    observeAndSendGeneric(ref, mqttClient, gson, "sensor/steps", Steps::class)

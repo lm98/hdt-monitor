@@ -1,4 +1,4 @@
-package bp.data.source
+package bp.data.source.model
 
 /** DATA COMING FROM FIREBASE **/
 
