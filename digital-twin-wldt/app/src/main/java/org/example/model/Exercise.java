@@ -1,18 +1,15 @@
 package org.example.model;
 
-import static org.example.model.Exercise.ExerciseType.*;
 public record Exercise(
-        ExerciseType exerciseType,
-        Long startTime,
-        Long endTime
+        Long start_time,
+        String uid,
+        Integer start_time_zone,
+        Long end_time,
+        Integer end_time_zone,
+        Integer id,
+        String exercise_type
 ) {
-    public enum ExerciseType {
-        RUNNING,
-        BIKING,
-        NONE,
-    }
-
     public static Exercise defaultExercise() {
-        return new Exercise(NONE, -1L, -1L);
+        return new Exercise(-1L, "", 0, -1L, 0, -1, "None");
     }
 }
