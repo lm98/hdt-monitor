@@ -19,7 +19,6 @@ export default function MqttPropertyLineChart({ broker, topic, dataKeys, title, 
       if (t === topic) {
         try {
           const parsed = JSON.parse(message.toString());
-          console.log(`Parsed: ${parsed.toString()}`)
           let entry = null
           if (parsed['timestamp'] !== null) {
             entry = { time: new Date(parsed['timestamp'] * 1000).toLocaleTimeString() };
