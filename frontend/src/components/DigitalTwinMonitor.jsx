@@ -1,8 +1,12 @@
+import MqttLogger from './MqttLogger';
 import MqttPropertyLineChart from './MqttPropertyLineChart';
 
 export default function DigitalTwinMonitor() {
-  const topicBp = process.env.REACT_APP_TOPIC_BLOOD_PRESSURE || 'sensor/blood-pressure';
-  const topicHr = process.env.REACT_APP_TOPIC_HEART_RATE || 'sensor/heart-rate';
+  const topicBp = process.env.REACT_APP_TOPIC_BLOOD_PRESSURE || 'state/blood-pressure';
+  const topicHr = process.env.REACT_APP_TOPIC_HEART_RATE || 'state/heart-rate';
+  const topicSteps = process.env.REACT_APP_TOPIC_STEPS || 'state/steps';
+  const topicBloodOxygen = process.env.REACT_APP_TOPIC_BLOOD_OXYGEN || 'state/blood-oxygen';
+  const topicExercise = process.env.REACT_APP_TOPIC_EXERCISE || 'state/exercise';
   const broker = process.env.REACT_APP_MQTT_BROKER || 'ws://localhost:9001';
 
   return (
@@ -21,9 +25,12 @@ export default function DigitalTwinMonitor() {
       }}>
         Human Digital Twin Monitor
       </h1>
-
       {/* Section: Blood Pressure */}
       <section>
+        <MqttLogger
+          broker={broker}
+          topics={[topicBp, topicHr, topicExercise, topicSteps, topicBloodOxygen]}
+        />
         <MqttPropertyLineChart
           broker = {broker}
           topic = {topicBp}
@@ -40,20 +47,28 @@ export default function DigitalTwinMonitor() {
         />
         <MqttPropertyLineChart
           broker={broker}
-          topic={topicHr}
-          title="Excercise Activity"
-          dataKeys={['hrAVG']}
-          yDomain={[40, 180]}
+          topic={topicBloodOxygen}
+          title="Oxygen Saturation"
+          dataKeys={['percentage']}
+          yDomain={[0, 100]}
         />
       </section>
 
       {/* Placeholder for future charts */}
       {/* <section>
-        <VitalSignChart
-          topic="sensor/heartRate"
+        <MqttPropertyLineChart
+          broker = {broker}
+          topic = {topicBp}
+          title="Blood Pressure"
+          dataKeys={['systolic', 'diastolic']}
+          yDomain={[60, 180]}
+        />
+        <MqttPropertyLineChart
+          broker={broker}
+          topic={topicHr}
           title="Heart Rate"
-          dataKeys={['bpm']}
-          yDomain={[40, 160]}
+          dataKeys={['hrAVG']}
+          yDomain={[40, 180]}
         />
       </section> */}
 
