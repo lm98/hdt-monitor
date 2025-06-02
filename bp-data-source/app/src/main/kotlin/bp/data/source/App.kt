@@ -36,7 +36,7 @@ val dbUrl: String? = System.getenv().getOrDefault(
 
 val referencePath: String? = System.getenv().getOrDefault(
     "FIREBASE_REFERENCE_PATH",
-    "eI9rnUy-QY-7XprUam0IqP"
+    "dEgn1tJeRNC3fljY9wSOs2"
 )
 
 fun main(): Unit = runBlocking {
