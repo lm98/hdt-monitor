@@ -4,11 +4,17 @@
 package bp.data.source
 
 import bp.data.source.model.BloodOxygen
+import bp.data.source.model.BloodOxygenMapper
+import bp.data.source.model.BloodOxygenMeasurement
 import bp.data.source.model.BloodPressure
 import bp.data.source.model.Exercise
+import bp.data.source.model.ExerciseMapper
+import bp.data.source.model.ExerciseMeasurement
 import bp.data.source.model.HeartRate
 import bp.data.source.model.Measurement
 import bp.data.source.model.Steps
+import bp.data.source.model.StepsMapper
+import bp.data.source.model.StepsMeasurement
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
@@ -79,12 +85,14 @@ fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
     println("Published to [$topic]: $payload")
 }
 
-suspend fun <T : Any> observeAndSendGeneric(
+suspend fun <T : Any, O: Any> observeAndSendGeneric(
     ref: DatabaseReference,
     mqttClient: MqttClient,
     gson: Gson,
     topic: String,
-    clazz: KClass<T>
+    parsedClazz: KClass<T>,
+    toSendClazz: KClass<O>,
+    mapper: Mapper<T, O>,
 ): Unit = suspendCancellableCoroutine { continuation ->
     val listener = object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
@@ -94,10 +102,11 @@ suspend fun <T : Any> observeAndSendGeneric(
                 println("Raw child key: ${child.key}")
                 println("Raw child value: ${child.value}")
 
-                val measurement = child.getValue(clazz.java)
+                val measurement = child.getValue(parsedClazz.java)
                 if (measurement != null) {
                     println("Parsed Measurement: $measurement")
-                    val payload = gson.toJson(measurement)
+                    val toSend = mapper.map(measurement, toSendClazz.java)
+                    val payload = gson.toJson(toSend)
                     sendToMqtt(mqttClient, topic, payload)
                 } else {
                     println("Failed to parse measurement for key: ${child.key}")
@@ -168,11 +177,35 @@ suspend fun observeAndSendBP(ref: DatabaseReference,
 }
 
 suspend fun observeAndSendExercises(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
-    observeAndSendGeneric(ref, mqttClient, gson, "sensor/exercise", Exercise::class)
+    observeAndSendGeneric(
+        ref,
+        mqttClient,
+        gson,
+        "sensor/exercise",
+        ExerciseMeasurement::class,
+        Exercise::class,
+        ExerciseMapper
+    )
 
 
 suspend fun observeAndSendSteps(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
-    observeAndSendGeneric(ref, mqttClient, gson, "sensor/steps", Steps::class)
+    observeAndSendGeneric(
+        ref,
+        mqttClient,
+        gson,
+        "sensor/steps",
+        StepsMeasurement::class,
+        Steps::class,
+        StepsMapper
+    )
 
 suspend fun observeAndSendBloodOxygen(ref: DatabaseReference, mqttClient: MqttClient, gson: Gson) =
-    observeAndSendGeneric(ref, mqttClient, gson, "sensor/blood-oxygen", BloodOxygen::class)
+    observeAndSendGeneric(
+        ref,
+        mqttClient,
+        gson,
+        "sensor/blood-oxygen",
+        BloodOxygenMeasurement::class,
+        BloodOxygen::class,
+        BloodOxygenMapper
+    )
