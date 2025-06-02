@@ -1,16 +1,10 @@
 package org.example.model;
-
-import static org.example.model.Mood.MoodDescription.*;
 public record Mood(
+        String mood,
         Double energyLevel,
-        MoodDescription moodDescription
+        Long timestamp
 ) {
-    public enum MoodDescription {
-        NONE,
-        HAPPY,
-        STRESSED,
-    }
     public static Mood defaultMood() {
-        return new Mood(-1.0, NONE);
+        return new Mood("Normal", -1.0, -1L);
     }
 }
