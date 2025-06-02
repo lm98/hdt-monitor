@@ -1,25 +1,25 @@
 package org.example.util.serde;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.model.OxygenSaturation;
+import org.example.model.BloodOxygen;
 
-public class OxygenSaturationStub extends Stub<OxygenSaturation> {
+public class BloodOxygenStub extends Stub<BloodOxygen> {
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public OxygenSaturationStub() {
+    public BloodOxygenStub() {
         super(
                 t -> {
                     try {
                         return mapper.writeValueAsString(t);
                     } catch (Exception e) {
-                        return OxygenSaturation.defaultOxygenSaturation().toString();
+                        return BloodOxygen.defaultBloodOxygen().toString();
                     }
                 },
                 s -> {
                     try {
-                        return mapper.readValue(s, OxygenSaturation.class);
+                        return mapper.readValue(s, BloodOxygen.class);
                     } catch (Exception e) {
-                        return OxygenSaturation.defaultOxygenSaturation();
+                        return BloodOxygen.defaultBloodOxygen();
                     }
                 }
         );

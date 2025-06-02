@@ -28,7 +28,7 @@ public class App {
         public static BloodPressureStub bpStub = new BloodPressureStub();
         public static HeartRateStub hrStub = new HeartRateStub();
         public static StepsStub stepsStub = new StepsStub();
-        public static OxygenSaturationStub oxyStub = new OxygenSaturationStub();
+        public static BloodOxygenStub oxyStub = new BloodOxygenStub();
         public static ExerciseStub exerciseStub = new ExerciseStub();
         public static MoodStub moodStub = new MoodStub();
     }
@@ -48,7 +48,7 @@ public class App {
                     .addPropertyTopic("blood-pressure", "state/blood-pressure", MqttQosLevel.MQTT_QOS_0, bpStub::serialize)
                     .addPropertyTopic("heart-rate", "state/heart-rate", MqttQosLevel.MQTT_QOS_0, hrStub::serialize)
                     .addPropertyTopic("steps", "state/steps", MqttQosLevel.MQTT_QOS_0, stepsStub::serialize)
-                    .addPropertyTopic("oxygen-saturation", "state/oxygen-saturation", MqttQosLevel.MQTT_QOS_0, oxyStub::serialize)
+                    .addPropertyTopic("blood-oxygen", "state/blood-oxygen", MqttQosLevel.MQTT_QOS_0, oxyStub::serialize)
                     .addPropertyTopic("exercise", "state/exercise", MqttQosLevel.MQTT_QOS_0, exerciseStub::serialize)
                     .addPropertyTopic("mood", "state/mood", MqttQosLevel.MQTT_QOS_0, moodStub::serialize)
                     .build();
@@ -102,9 +102,9 @@ public class App {
                             stepsStub::deserialize
                     )
                     .addPhysicalAssetPropertyAndTopic(
-                            "oxygen-saturation",
-                            OxygenSaturation.defaultOxygenSaturation(),
-                            "sensor/oxygen-saturation",
+                            "blood-oxygen",
+                            BloodOxygen.defaultBloodOxygen(),
+                            "sensor/blood-oxygen",
                             oxyStub::deserialize
                     )
                     .addPhysicalAssetPropertyAndTopic(
