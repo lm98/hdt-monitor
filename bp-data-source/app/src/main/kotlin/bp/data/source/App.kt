@@ -12,6 +12,7 @@ import bp.data.source.model.ExerciseMapper
 import bp.data.source.model.ExerciseMeasurement
 import bp.data.source.model.HeartRate
 import bp.data.source.model.Measurement
+import bp.data.source.model.Mood
 import bp.data.source.model.Steps
 import bp.data.source.model.StepsMapper
 import bp.data.source.model.StepsMeasurement
@@ -74,6 +75,8 @@ fun main(): Unit = runBlocking {
     launch { observeAndSendSteps(refSteps, mqttClient, gson) }
     launch { observeAndSendBP(refBP, mqttClient, gson) }
     launch { observeAndSendBloodOxygen(refBloodOxygen, mqttClient, gson) }
+    /** MOCKUP **/
+    launch { observeAndSendMood(mqttClient, gson) }
 }
 
 fun sendToMqtt(mqttClient: MqttClient, topic: String, payload: String) {
@@ -209,3 +212,13 @@ suspend fun observeAndSendBloodOxygen(ref: DatabaseReference, mqttClient: MqttCl
         BloodOxygen::class,
         BloodOxygenMapper
     )
+
+fun observeAndSendMood(mqttClient: MqttClient, gson: Gson) = runBlocking {
+    val mood = Mood(
+        mood = "Neutral",
+        energyLevel = 55.0,
+        timestamp = System.currentTimeMillis()
+    )
+    val payload = gson.toJson(mood)
+    sendToMqtt(mqttClient, "sensor/mood", payload)
+}
