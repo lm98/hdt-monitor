@@ -25,13 +25,6 @@ data class Measurement(
 )
 
 /** DATA TO BE SENT **/
-
-data class BloodPressure(
-    val systolic: Int? = null,
-    val diastolic: Int? = null,
-    val timestamp: Long? = null,
-)
-
 data class HeartRate(
     val hrAVG: Int? = null,
     val hrEnd: Long? = null,
@@ -39,5 +32,11 @@ data class HeartRate(
     val hrMC: Int? = null,
     val hrMIN: Int? = null,
     val hrStart: Long? = null,
+    val timestamp: Long? = null,
+)
+
+data class BloodPressure(
+    val systolic: Int? = null,
+    val diastolic: Int? = null,
     val timestamp: Long? = null,
 )
